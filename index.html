@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ngữ pháp tiếng Nga · Ментальные карты</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1f2430;--mut:#6b7280;--bd:#dfe3ee}
+@media(prefers-color-scheme:dark){:root{--bg:#14161c;--card:#1d2029;--tx:#e8eaf0;--mut:#9aa1b2;--bd:#2d3140}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;height:100vh}
+header{padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border-bottom:1px solid var(--bd)}
+h1{font-size:17px;margin:0 8px 0 0}
+button,select,input,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:5px 10px}
+button,select{cursor:pointer}
+button:hover{border-color:#4f46e5}
+main{flex:1;display:flex;min-height:0}
+#map{flex:1;overflow:auto}
+#panel{width:330px;padding:14px;background:var(--card);border-left:1px solid var(--bd);overflow:auto}
+#panel label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
+#panel input,#panel textarea{width:100%}
+#panel textarea{resize:vertical}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.hint{color:var(--mut)}
+svg text{pointer-events:none}
+.nd{cursor:pointer}
+@media(max-width:800px){main{flex-direction:column}#panel{width:auto;max-height:45%;border-left:0;border-top:1px solid var(--bd)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 Сơ đồ tư duy · Ментальные карты</h1>
+  <select id="sel"></select>
+  <button id="addMap">+ Sơ đồ mới</button>
+  <button id="delMap">Xóa sơ đồ</button>
+  <label><input type="checkbox" id="hideV"> Ẩn tiếng Việt (tự kiểm tra)</label>
+  <button id="exp">Xuất JSON</button>
+  <button id="imp">Nhập JSON</button>
+  <button id="reset">Đặt lại mặc định</button>
+  <input type="file" id="file" accept=".json" hidden>
+</header>
+<main>
+  <div id="map"></div>
+  <div id="panel"></div>
+</main>
+<script>
+const KEY='ru-grammar-maps-v1';
+const N=(t,v,n,e,c)=>({t,v:v||'',n:n||'',e:e||[],c:c||[]});
+
+const DEFAULT=[
+N('Падежи','6 cách (格)','Русский язык: 6 падежей. Danh từ, tính từ, đại từ biến đổi theo cách.',[],[
+  N('Именительный','Cách 1 · Кто? Что?','Chủ ngữ, từ điển hình. Dạng gốc của từ.',['Студент читает книгу.'],[
+    N('Окончания','Đuôi','-, -а/-я, -о/-е, -ь; số nhiều: -ы/-и, -а/-я',['стол, книга, окно; столы, книги, окна'])]),
+  N('Родительный','Cách 2 · Кого? Чего?','Dùng để chỉ sở hữu, phủ định, số lượng, và sau nhiều giới từ.',['У меня нет времени.'],[
+    N('Sở hữu','Принадлежность','Danh từ 2 đứng sau danh từ 1.',['книга брата']),
+    N('Phủ định','Отрицание','нет, не было, не будет + Р.п.',['В городе нет метро.']),
+    N('Số lượng','Количество','много, мало, несколько, бутылка, 5+ + Р.п.',['много друзей, пять книг']),
+    N('Giới từ','Предлоги','у, из, от, до, без, для, около, после, с (từ)',['Я иду из университета.']),
+    N('Окончания','Đuôi','-а/-я; -ы/-и (nữ); số nhiều: -ов/-ев, -ей, (không đuôi)',['стола, книги, окна; столов, книг'])]),
+  N('Дательный','Cách 3 · Кому? Чему?','Người nhận hành động, trạng thái, tuổi, giới từ к, по.',['Я дал книгу другу.'],[
+    N('Người nhận','Адресат','давать, писать, звонить, помогать + Д.п.',['Я звоню маме.']),
+    N('Cảm giác/Cần','Состояние','Мне нравится / нужно / холодно / интересно',['Мне нужно учиться.']),
+    N('Tuổi','Возраст','Мне 19 лет.',['Брату 20 лет.']),
+    N('Giới từ','Предлоги','к (đến), по (theo, dọc), благодаря',['Я иду к врачу.']),
+    N('Окончания','Đuôi','-у/-ю; -е/-и (nữ); số nhiều: -ам/-ям',['столу, книге, окну; столам'])]),
+  N('Винительный','Cách 4 · Кого? Что?','Tân ngữ trực tiếp, hướng đi (Куда?), thời gian.',['Я читаю книгу.'],[
+    N('Tân ngữ','Прямое дополнение','Động từ ngoại động: читать, видеть, любить',['Я вижу брата.']),
+    N('Куда?','Направление','в, на + В.п. (đi tới đâu)',['Я иду в школу.']),
+    N('Thời gian','Время','в среду, в субботу, через час, за неделю',['Я приду в среду.']),
+    N('Окончания','Đuôi','Giống đực có sinh: = Р.п.; nữ: -у/-ю; trung = И.п.',['брата, книгу, окно'])]),
+  N('Творительный','Cách 5 · Кем? Чем?','Công cụ, cùng với ai, vị ngữ, giới từ chỉ vị trí.',['Я пишу ручкой.'],[
+    N('Công cụ','Орудие','Làm bằng cái gì',['резать ножом']),
+    N('С + Т.п.','Совместность','с (cùng với)',['Я гуляю с другом.']),
+    N('Быть/Стать','Связка','быть, стать, работать + Т.п.',['Он хочет стать врачом.']),
+    N('Giới từ','Предлоги','над, под, перед, за, между, рядом с',['Книга лежит под столом.']),
+    N('Окончания','Đuôi','-ом/-ем; -ой/-ей (nữ); số nhiều: -ами/-ями',['столом, книгой, окном'])]),
+  N('Предложный','Cách 6 · О ком? О чём? Где?','Chỉ dùng với giới từ: о, в, на, при.',['Я живу в Москве.'],[
+    N('О + П.п.','Тема','Nói/nghĩ về',['Мы говорим о фильме.']),
+    N('Где?','Место','в, на + П.п. (ở đâu)',['Книга лежит на столе.']),
+    N('Окончания','Đuôi','-е; -и (-ия, -ие, -ь nữ); số nhiều: -ах/-ях',['о столе, в школе, в здании'])])
+]),
+N('Вид глагола','Thể động từ','Mỗi động từ có thường là một cặp: НСВ và СВ.',[],[
+  N('НСВ','Chưa hoàn thành · Что делать?','Nhấn mạnh quá trình, sự lặp lại, sự việc nói chung.',['Я читал книгу весь вечер.'],[
+    N('Từ nhận biết','Маркеры','всегда, часто, каждый день, обычно, долго, весь день',['Я каждый день читаю.']),
+    N('Thì','Времена','Có đủ 3 thì: читал / читаю / буду читать',[])]),
+  N('СВ','Hoàn thành · Что сделать?','Nhấn mạnh kết quả, một lần, đã xong.',['Я прочитал книгу.'],[
+    N('Từ nhận biết','Маркеры','вдруг, уже, наконец, за час, сразу',['Я прочитал за два часа.']),
+    N('Thì','Времена','Chỉ có quá khứ và tương lai đơn: прочитал / прочитаю (không có hiện tại)',[])]),
+  N('Tạo cặp','Образование пар','Ba cách thành lập cặp thể.',[],[
+    N('Tiền tố','Приставка','писать → написать; делать → сделать',[]),
+    N('Hậu tố','Суффикс','решить → решать; рассказать → рассказывать',[]),
+    N('Khác gốc','Разные корни','брать → взять; говорить → сказать; класть → положить',[])])
+]),
+N('Глаголы движения','Động từ chuyển động','Chia thành 2 nhóm: định hướng và không định hướng.',[],[
+  N('Định hướng','Однонаправленные','Đi 1 chiều, đang đi, một lần.',['Я иду в университет.'],[
+    N('Danh sách','Список','идти, ехать, бежать, лететь, плыть, нести, вести, везти',[])]),
+  N('Không định hướng','Неоднонаправленные','Đi lại nhiều lần, thói quen, khả năng, đi khứ hồi.',['Я часто хожу в библиотеку.'],[
+    N('Danh sách','Список','ходить, ездить, бегать, летать, плавать, носить, водить, возить',[])]),
+  N('Tiền tố','Приставки','Khi thêm tiền tố, cặp trở thành cặp thể (идти → прийти).',[],[
+    N('при-','đến','приехать, прийти',['Я приехал в Москву.']),
+    N('у-','rời đi','уйти, уехать',['Он ушёл домой.']),
+    N('в- / вы-','vào / ra','войти, выйти',['Она вышла из комнаты.']),
+    N('пере- / под-','qua / lại gần','перейти, подойти',['Я перешёл улицу.'])])
+])
+];
+
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(s)&&s.length)return s}catch(e){}return JSON.parse(JSON.stringify(DEFAULT))}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(maps))}catch(e){}}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cut=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+
+let maps=load(),cur=0,sel=null,NODES=[];
+const W=190,H=46,GX=250,GY=60;
+const $=id=>document.getElementById(id);
+
+function render(){
+  const root=maps[cur];let row=0,maxD=0;NODES=[];
+  function walk(n,d,hue,p){
+    maxD=Math.max(maxD,d);
+    const kids=n.x?[]:n.c;let y;
+    if(!kids.length)y=row++;
+    else{const ys=kids.map((k,i)=>walk(k,d+1,d==0?(i*67+200)%360:hue,n));y=(ys[0]+ys[ys.length-1])/2}
+    NODES.push({n,d,y,hue,p});return y;
+  }
+  walk(root,0,220,null);
+  const pos=new Map(NODES.map(o=>[o.n,o]));
+  const hideV=$('hideV').checked;
+  let links='',nodes='';
+  NODES.forEach((o,i)=>{
+    const x=o.d*GX+20,y=o.y*GY+20;
+    if(o.p){
+      const q=pos.get(o.p),x0=q.d*GX+20+W,y0=q.y*GY+20+H/2,x1=x,y1=y+H/2,m=(x0+x1)/2;
+      links+=`<path d="M${x0} ${y0}C${m} ${y0} ${m} ${y1} ${x1} ${y1}" fill="none" stroke="hsl(${o.hue} 55% 55%)" stroke-width="2"/>`;
+    }
+    const isRoot=!o.p,s=o.n===sel;
+    const fill=isRoot?'#4f46e5':`hsl(${o.hue} 60% 50% / .18)`;
+    const stroke=isRoot?'#4f46e5':`hsl(${o.hue} 60% 50%)`;
+    const col=isRoot?'#fff':'var(--tx)';
+    nodes+=`<g class="nd" data-i="${i}" transform="translate(${x} ${y})">
+      <rect width="${W}" height="${H}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="${s?4:1.5}"/>
+      <text x="10" y="${hideV||!o.n.v?28:19}" font-size="14" font-weight="600" fill="${col}">${esc(cut(o.n.t,24))}</text>
+      ${hideV||!o.n.v?'':`<text x="10" y="36" font-size="11" fill="${col}" opacity=".75">${esc(cut(o.n.v,30))}</text>`}
+      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="9" fill="var(--card)" stroke="${stroke}" stroke-width="1.5"/><text x="${W}" y="${H/2+4}" text-anchor="middle" font-size="13" fill="var(--tx)">${o.n.x?'+':'−'}</text></g>`:''}
+    </g>`;
+  });
+  $('map').innerHTML=`<svg width="${(maxD+1)*GX+60}" height="${row*GY+40}">${links}${nodes}</svg>`;
+}
+
+function panel(){
+  const p=$('panel');
+  if(!sel){p.innerHTML='<p class="hint">Bấm vào một ô trên sơ đồ để xem và sửa nội dung.<br>Нажмите на узел, чтобы увидеть и изменить.</p>';return}
+  const isRoot=maps[cur]===sel;
+  p.innerHTML=`
+  <label>Tiêu đề / Заголовок (tiếng Nga)</label><input id="f_t" value="${esc(sel.t)}">
+  <label>Nghĩa tiếng Việt / По-вьетнамски</label><input id="f_v" value="${esc(sel.v)}">
+  <label>Giải thích / Объяснение</label><textarea id="f_n" rows="5">${esc(sel.n)}</textarea>
+  <label>Ví dụ (mỗi dòng một câu) / Примеры</label><textarea id="f_e" rows="5">${esc(sel.e.join('\n'))}</textarea>
+  <div class="row">
+    <button id="b_add">+ Nhánh con / Дочерний</button>
+    ${isRoot?'':'<button id="b_del">Xóa / Удалить</button>'}
+    ${sel.c.length?'<button id="b_tg">Thu gọn / Свернуть</button>':''}
+  </div>`;
+  [['t','t'],['v','v'],['n','n']].forEach(([id,k])=>$('f_'+id).oninput=e=>{sel[k]=e.target.value;save();render()});
+  $('f_e').oninput=e=>{sel.e=e.target.value.split('\n');save()};
+  $('b_add').onclick=()=>{const k=N('Новый','Mới');sel.c.push(k);sel.x=0;sel=k;save();render();panel()};
+  if($('b_del'))$('b_del').onclick=()=>{
+    const o=NODES.find(o=>o.n===sel);o.p.c.splice(o.p.c.indexOf(sel),1);sel=o.p;save();render();panel()};
+  if($('b_tg'))$('b_tg').onclick=()=>{sel.x=sel.x?0:1;save();render()};
+}
+
+$('map').onclick=e=>{
+  const tg=e.target.closest('[data-tg]');
+  if(tg){const n=NODES[tg.dataset.tg].n;n.x=n.x?0:1;save();render();return}
+  const g=e.target.closest('.nd');
+  if(g){sel=NODES[g.dataset.i].n;render();panel()}
+};
+
+function fillSel(){$('sel').innerHTML=maps.map((m,i)=>`<option value="${i}">${esc(m.t)}</option>`).join('');$('sel').value=cur}
+function refresh(){fillSel();sel=null;render();panel()}
+$('sel').onchange=e=>{cur=+e.target.value;sel=null;render();panel()};
+$('hideV').onchange=render;
+$('addMap').onclick=()=>{const t=prompt('Tên sơ đồ / Название:');if(!t)return;maps.push(N(t));cur=maps.length-1;save();refresh();sel=maps[cur];render();panel()};
+$('delMap').onclick=()=>{if(maps.length<2)return alert('Cần giữ ít nhất 1 sơ đồ.');if(!confirm('Xóa sơ đồ "'+maps[cur].t+'"?'))return;maps.splice(cur,1);cur=0;save();refresh()};
+$('reset').onclick=()=>{if(!confirm('Đặt lại về nội dung mặc định? Mọi chỉnh sửa sẽ mất.'))return;maps=JSON.parse(JSON.stringify(DEFAULT));cur=0;save();refresh()};
+$('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(maps,null,1)],{type:'application/json'}));a.download='ngu-phap-nga.json';a.click()};
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d)||!d.length)throw 0;maps=d;cur=0;save();refresh()}catch(x){alert('File JSON không hợp lệ.')}};
+  r.readAsText(f);e.target.value='';
+};
+refresh();
+</script>
+</body>
+</html>
