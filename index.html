@@ -37,6 +37,8 @@ svg text{pointer-events:none}
   <button id="exp">Xuất JSON</button>
   <button id="imp">Nhập JSON</button>
   <button id="reset">Đặt lại mặc định</button>
+    <button id="login">Đăng nhập Google</button>
+  <span id="syncStat" class="hint"></span>
   <input type="file" id="file" accept=".json" hidden>
 </header>
 <main>
@@ -190,6 +192,63 @@ $('file').onchange=e=>{
   r.readAsText(f);e.target.value='';
 };
 refresh();
+</script>
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCaB2aWazNU8Wqzi6cxUvVrpAn327nFW2Q",
+  authDomain: "habit-app-0409nmt.firebaseapp.com",
+  projectId: "habit-app-0409nmt",
+  storageBucket: "habit-app-0409nmt.firebasestorage.app",
+  messagingSenderId: "288401488015",
+  appId: "1:288401488015:web:626d814942d677db8458fa"
+});
+const auth = getAuth(app), db = getFirestore(app);
+const UPD = 'ru-grammar-updated';
+let user = null, timer = null;
+const stat = t => { document.getElementById('syncStat').textContent = t; };
+const ref = () => doc(db, 'ngupham', user.uid);
+
+// Bọc hàm save() cũ: mỗi lần lưu thì ghi thời gian và đẩy lên đám mây (chờ 1,5 giây)
+const origSave = window.save;
+window.save = function () {
+  origSave();
+  try { localStorage.setItem(UPD, Date.now()); } catch (e) {}
+  if (user) { clearTimeout(timer); stat('Chờ lưu…'); timer = setTimeout(push, 1500); }
+};
+
+async function push() {
+  try {
+    await setDoc(ref(), { data: JSON.stringify(maps), updated: +localStorage.getItem(UPD) || Date.now() });
+    stat('✓ Đã đồng bộ');
+  } catch (e) { stat('Lỗi đồng bộ'); console.error(e); }
+}
+
+async function pull() {
+  try {
+    stat('Đang đồng bộ…');
+    const s = await getDoc(ref());
+    const local = +localStorage.getItem(UPD) || 0;
+    if (s.exists() && s.data().updated > local) {
+      maps = JSON.parse(s.data().data); cur = 0;
+      origSave(); localStorage.setItem(UPD, s.data().updated);
+      refresh(); stat('✓ Đã tải từ đám mây');
+    } else { await push(); }
+  } catch (e) { stat('Lỗi đồng bộ'); console.error(e); }
+}
+
+const btn = document.getElementById('login');
+btn.onclick = () => user
+  ? signOut(auth)
+  : signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert('Lỗi đăng nhập: ' + e.code));
+onAuthStateChanged(auth, u => {
+  user = u;
+  btn.textContent = u ? 'Đăng xuất (' + u.email + ')' : 'Đăng nhập Google';
+  if (u) pull(); else stat('');
+});
 </script>
 </body>
 </html>
