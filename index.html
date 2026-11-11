@@ -24,7 +24,19 @@ main{flex:1;display:flex;min-height:0}
 .hint{color:var(--mut)}
 svg text{pointer-events:none}
 .nd{cursor:pointer}
-@media(max-width:800px){main{flex-direction:column}#panel{width:auto;max-height:45%;border-left:0;border-top:1px solid var(--bd)}}
+body{height:100vh;height:100dvh}
+#panel .close{float:right}
+.zoom{display:flex;gap:4px}
+@media(max-width:800px){
+  header{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding:8px 10px}
+  header>*{flex:none}
+  h1{font-size:15px}
+  main{flex-direction:column}
+  #panel{width:auto;max-height:50%;border-left:0;border-top:1px solid var(--bd);padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  #panel.empty{display:none}
+  input,textarea,select{font-size:16px}
+  button{padding:8px 12px}
+}
 </style>
 </head>
 <body>
@@ -34,6 +46,7 @@ svg text{pointer-events:none}
   <button id="addMap">+ Sơ đồ mới</button>
   <button id="delMap">Xóa sơ đồ</button>
   <label><input type="checkbox" id="hideV"> Ẩn tiếng Việt (tự kiểm tra)</label>
+    <span class="zoom"><button id="zo">−</button><button id="zi">+</button></span>
   <button id="exp">Xuất JSON</button>
   <button id="imp">Nhập JSON</button>
   <button id="reset">Đặt lại mặc định</button>
@@ -112,6 +125,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const cut=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
 
 let maps=load(),cur=0,sel=null,NODES=[];
+  let zoom=innerWidth<800?.8:1;
 const W=190,H=46,GX=250,GY=60;
 const $=id=>document.getElementById(id);
 
@@ -142,14 +156,16 @@ function render(){
       <rect width="${W}" height="${H}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="${s?4:1.5}"/>
       <text x="10" y="${hideV||!o.n.v?28:19}" font-size="14" font-weight="600" fill="${col}">${esc(cut(o.n.t,24))}</text>
       ${hideV||!o.n.v?'':`<text x="10" y="36" font-size="11" fill="${col}" opacity=".75">${esc(cut(o.n.v,30))}</text>`}
-      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="9" fill="var(--card)" stroke="${stroke}" stroke-width="1.5"/><text x="${W}" y="${H/2+4}" text-anchor="middle" font-size="13" fill="var(--tx)">${o.n.x?'+':'−'}</text></g>`:''}
+      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="16" fill="transparent"/>
     </g>`;
   });
-  $('map').innerHTML=`<svg width="${(maxD+1)*GX+60}" height="${row*GY+40}">${links}${nodes}</svg>`;
+ const w=(maxD+1)*GX+60,h=row*GY+40;
+$('map').innerHTML=`<svg width="${w*zoom}" height="${h*zoom}" viewBox="0 0 ${w} ${h}">${links}${nodes}</svg>`;
 }
 
 function panel(){
   const p=$('panel');
+  p.classList.toggle('empty',!sel);
   if(!sel){p.innerHTML='<p class="hint">Bấm vào một ô trên sơ đồ để xem và sửa nội dung.<br>Нажмите на узел, чтобы увидеть и изменить.</p>';return}
   const isRoot=maps[cur]===sel;
   p.innerHTML=`
@@ -162,6 +178,8 @@ function panel(){
     ${isRoot?'':'<button id="b_del">Xóa / Удалить</button>'}
     ${sel.c.length?'<button id="b_tg">Thu gọn / Свернуть</button>':''}
   </div>`;
+    p.insertAdjacentHTML('afterbegin','<button class="close" id="b_x">✕</button>');
+  $('b_x').onclick=()=>{sel=null;render();panel()};
   [['t','t'],['v','v'],['n','n']].forEach(([id,k])=>$('f_'+id).oninput=e=>{sel[k]=e.target.value;save();render()});
   $('f_e').oninput=e=>{sel.e=e.target.value.split('\n');save()};
   $('b_add').onclick=()=>{const k=N('Новый','Mới');sel.c.push(k);sel.x=0;sel=k;save();render();panel()};
@@ -235,6 +253,8 @@ async function pull() {
     if (s.exists() && s.data().updated > local) {
       maps = JSON.parse(s.data().data); cur = 0;
       origSave(); localStorage.setItem(UPD, s.data().updated);
+      $('zi').onclick=()=>{zoom=Math.min(2,zoom+.2);render()};
+$('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
       refresh(); stat('✓ Đã tải từ đám mây');
     } else { await push(); }
   } catch (e) { stat('Lỗi đồng bộ'); console.error(e); }
