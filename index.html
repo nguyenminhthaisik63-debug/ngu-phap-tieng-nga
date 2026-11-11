@@ -41,7 +41,7 @@ body{height:100vh;height:100dvh}
 </head>
 <body>
 <header>
-  <h1>🧠 Сơ đồ tư duy · Ментальные карты</h1>
+  <h1>🧠 Sơ đồ tư duy · Ментальные карты</h1>
   <select id="sel"></select>
   <button id="addMap">+ Sơ đồ mới</button>
   <button id="delMap">Xóa sơ đồ</button>
@@ -156,7 +156,7 @@ function render(){
       <rect width="${W}" height="${H}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="${s?4:1.5}"/>
       <text x="10" y="${hideV||!o.n.v?28:19}" font-size="14" font-weight="600" fill="${col}">${esc(cut(o.n.t,24))}</text>
       ${hideV||!o.n.v?'':`<text x="10" y="36" font-size="11" fill="${col}" opacity=".75">${esc(cut(o.n.v,30))}</text>`}
-      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="16" fill="transparent"/>
+      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="18" fill="transparent"/><circle cx="${W}" cy="${H/2}" r="10" fill="var(--card)" stroke="${stroke}" stroke-width="1.5"/><text x="${W}" y="${H/2+4}" text-anchor="middle" font-size="13" fill="var(--tx)">${o.n.x?'+':'−'}</text></g>`:''}
     </g>`;
   });
  const w=(maxD+1)*GX+60,h=row*GY+40;
@@ -209,6 +209,8 @@ $('file').onchange=e=>{
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d)||!d.length)throw 0;maps=d;cur=0;save();refresh()}catch(x){alert('File JSON không hợp lệ.')}};
   r.readAsText(f);e.target.value='';
 };
+$('zi').onclick=()=>{zoom=Math.min(2,zoom+.2);render()};
+$('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
 refresh();
 </script>
   <script type="module">
@@ -253,8 +255,6 @@ async function pull() {
     if (s.exists() && s.data().updated > local) {
       maps = JSON.parse(s.data().data); cur = 0;
       origSave(); localStorage.setItem(UPD, s.data().updated);
-      $('zi').onclick=()=>{zoom=Math.min(2,zoom+.2);render()};
-$('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
       refresh(); stat('✓ Đã tải từ đám mây');
     } else { await push(); }
   } catch (e) { stat('Lỗi đồng bộ'); console.error(e); }
