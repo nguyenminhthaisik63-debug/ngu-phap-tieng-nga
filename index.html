@@ -47,6 +47,7 @@ body{height:100vh;height:100dvh}
   <button id="delMap">Xóa sơ đồ</button>
   <label><input type="checkbox" id="hideV"> Ẩn tiếng Việt (tự kiểm tra)</label>
     <span class="zoom"><button id="zo">−</button><button id="zi">+</button></span>
+    <span class="hint" title="N: nhánh con · V: nghĩa Việt · G: giải thích · E: ví dụ · M: sơ đồ mới · Esc: thoát ô">⌨ N V G E M</span>
   <button id="exp">Xuất JSON</button>
   <button id="imp">Nhập JSON</button>
   <button id="reset">Đặt lại mặc định</button>
@@ -211,6 +212,30 @@ $('file').onchange=e=>{
 };
 $('zi').onclick=()=>{zoom=Math.min(2,zoom+.2);render()};
 $('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
+  document.addEventListener('keydown',e=>{
+  const a=document.activeElement;
+  const typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  if(typing){if(e.key==='Escape')a.blur();return}
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const go=id=>{
+    e.preventDefault();
+    if(!sel){sel=maps[cur];render();panel()}
+    const el=$(id);if(!el)return;
+    el.focus();const L=el.value.length;el.setSelectionRange(L,L);
+  };
+  switch(e.code){
+    case 'KeyN':
+      e.preventDefault();
+      if(!sel){sel=maps[cur];render();panel()}
+      $('b_add').click();
+      $('f_t').focus();$('f_t').select();
+      break;
+    case 'KeyV':go('f_v');break;
+    case 'KeyG':go('f_n');break;
+    case 'KeyE':go('f_e');break;
+    case 'KeyM':e.preventDefault();$('addMap').click();break;
+  }
+});
 refresh();
 </script>
   <script type="module">
