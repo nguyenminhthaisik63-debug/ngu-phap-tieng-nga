@@ -47,7 +47,7 @@ body{height:100vh;height:100dvh}
   <button id="delMap">Xóa sơ đồ</button>
   <label><input type="checkbox" id="hideV"> Ẩn tiếng Việt (tự kiểm tra)</label>
     <span class="zoom"><button id="zo">−</button><button id="zi">+</button></span>
-    <span class="hint" title="N: nhánh con · V: nghĩa Việt · G: giải thích · E: ví dụ · M: sơ đồ mới · Esc: thoát ô">⌨ N V G E M</span>
+  <span class="hint" title="↑↓←→: di chuyển giữa các ô · Enter: sửa ô · N: nhánh con · V: nghĩa Việt · G: giải thích · E: ví dụ · M: sơ đồ mới · Esc: thoát ô">⌨ ↑↓←→ Enter N V G E M</span>
   <button id="exp">Xuất JSON</button>
   <button id="imp">Nhập JSON</button>
   <button id="reset">Đặt lại mặc định</button>
@@ -212,7 +212,33 @@ $('file').onchange=e=>{
 };
 $('zi').onclick=()=>{zoom=Math.min(2,zoom+.2);render()};
 $('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
-  document.addEventListener('keydown',e=>{
+  function reveal(o){
+  const m=$('map'),x=(o.d*GX+20)*zoom,y=(o.y*GY+20)*zoom,w=W*zoom,h=H*zoom;
+  if(x<m.scrollLeft+10)m.scrollLeft=x-20;
+  else if(x+w>m.scrollLeft+m.clientWidth-10)m.scrollLeft=x+w-m.clientWidth+20;
+  if(y<m.scrollTop+10)m.scrollTop=y-20;
+  else if(y+h>m.scrollTop+m.clientHeight-10)m.scrollTop=y+h-m.clientHeight+20;
+}
+function nav(dir){
+  if(!sel){sel=maps[cur];render();panel();return}
+  let o=NODES.find(x=>x.n===sel);if(!o)return;
+  const near=(list)=>list.reduce((a,b)=>Math.abs(b.y-o.y)<Math.abs(a.y-o.y)?b:a);
+  let t=null;
+  if(dir==='ArrowLeft'){
+    t=NODES.find(x=>x.n===o.p);
+  }else if(dir==='ArrowRight'){
+    if(o.n.x&&o.n.c.length){o.n.x=0;save();render();o=NODES.find(x=>x.n===sel)}
+    const k=NODES.filter(x=>x.p===o.n);
+    if(k.length)t=near(k);
+  }else{
+    const up=dir==='ArrowUp';
+    const c=NODES.filter(x=>x.d===o.d&&(up?x.y<o.y:x.y>o.y));
+    if(c.length)t=near(c);
+  }
+  if(t){sel=t.n;render();panel();reveal(t)}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(b)b.blur()});
+document.addEventListener('keydown',e=>{
   const a=document.activeElement;
   const typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
   if(typing){if(e.key==='Escape')a.blur();return}
@@ -224,6 +250,11 @@ $('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
     el.focus();const L=el.value.length;el.setSelectionRange(L,L);
   };
   switch(e.code){
+    case 'ArrowUp':case 'ArrowDown':case 'ArrowLeft':case 'ArrowRight':
+      e.preventDefault();nav(e.code);break;
+    case 'Enter':case 'NumpadEnter':
+      if(a&&a.tagName==='BUTTON')return;
+      go('f_t');break;
     case 'KeyN':
       e.preventDefault();
       if(!sel){sel=maps[cur];render();panel()}
