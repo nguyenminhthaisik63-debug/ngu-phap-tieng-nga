@@ -267,6 +267,130 @@ document.addEventListener('keydown',e=>{
     case 'KeyM':e.preventDefault();$('addMap').click();break;
   }
 });
+  /* ===== Ôn tập ngắt quãng / Интервальное повторение ===== */
+const INT=[0,1,3,7,14,30,60,120],DROP=2,BATCH=20,DAY=864e5;
+const LAB=['Chưa ôn','1 ngày','3 ngày','7 ngày','14 ngày','30 ngày','60 ngày','120 ngày'];
+let Q=[],total=0,done=0,shown=false,mode='';
+const rvStyle=document.createElement('style');
+rvStyle.textContent=`
+#rv{position:fixed;inset:0;background:rgba(15,16,25,.78);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px}
+#rv .box{background:var(--card);border:1px solid var(--bd);border-radius:14px;width:min(560px,100%);max-height:100%;overflow:auto;padding:20px}
+#rv h2{margin:4px 0;font-size:26px}
+#rv .cap{color:var(--mut);font-size:13px}
+#rv .btns{display:flex;gap:10px;margin-top:14px}
+#rv .btns button{flex:1;padding:12px;font-size:16px}
+#rv .ok{border-color:#16a34a;color:#16a34a}
+#rv .no{border-color:#dc2626;color:#dc2626}
+#rv .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin:12px 0}
+#rv .grid div{border:1px solid var(--bd);border-radius:8px;padding:6px 8px;font-size:13px}
+#rv .grid b{display:block;font-size:18px}
+#rv .ans{margin-top:14px;padding-top:10px;border-top:1px solid var(--bd)}
+#rv .ans p{margin:6px 0}`;
+document.head.appendChild(rvStyle);
+
+const isDue=n=>!n.s||n.s.d<=Date.now();
+const boxOf=n=>(n.s&&n.s.b)||0;
+function cards(){
+  const out=[];
+  maps.forEach(m=>{(function w(n,path){
+    n.c.forEach(k=>{
+      const p=path.concat(k.t);
+      if(k.v||k.n||(k.e&&k.e.some(Boolean)))out.push({n:k,path:p,map:m.t});
+      w(k,p);
+    });
+  })(m,[])});
+  return out;
+}
+const rb=document.createElement('button');rb.id='rvBtn';
+document.querySelector('header').appendChild(rb);
+function updBtn(){rb.textContent='🔁 Ôn tập ('+cards().filter(c=>isDue(c.n)).length+')'}
+const _render=window.render;
+window.render=function(){_render();updBtn()};
+
+function rvEl(){
+  let e=$('rv');
+  if(!e){e=document.createElement('div');e.id='rv';document.body.appendChild(e);e.onclick=rvClick}
+  return e;
+}
+function rvClose(){const e=$('rv');if(e)e.remove();mode='';updBtn()}
+function rvHome(){
+  mode='home';
+  const all=cards(),due=all.filter(c=>isDue(c.n)),cnt=Array(8).fill(0);
+  all.forEach(c=>cnt[boxOf(c.n)]++);
+  rvEl().innerHTML=`<div class="box"><h2>🔁 Ôn tập ngắt quãng</h2><div class="cap">Интервальное повторение</div>
+  <div class="grid">${cnt.map((x,i)=>`<div>${LAB[i]}<b>${x}</b></div>`).join('')}</div>
+  <p>Đến hạn: <b>${due.length}</b> / ${all.length} thẻ</p>
+  <div class="btns"><button data-a="close">Đóng (Esc)</button>${due.length?`<button class="ok" data-a="start">Bắt đầu (${Math.min(due.length,BATCH)})</button>`:''}</div></div>`;
+}
+function rvStart(){
+  const key=c=>c.n.s?c.n.s.d:9e15;
+  Q=cards().filter(c=>isDue(c.n)).sort((a,b)=>key(a)-key(b)).slice(0,BATCH);
+  total=Q.length;done=0;shown=false;rvCard();
+}
+function rvCard(){
+  if(!Q.length)return rvEnd();
+  mode='card';
+  const c=Q[0],n=c.n,ctx=[c.map].concat(c.path.slice(0,-1)).join(' › ');
+  rvEl().innerHTML=`<div class="box">
+  <div class="cap">Đã nhớ ${done}/${total} · còn ${Q.length} thẻ · nhóm: ${LAB[boxOf(n)]}</div>
+  <div class="cap">${esc(ctx)}</div><h2>${esc(n.t)}</h2>
+  ${shown?`<div class="ans">${n.v?`<p><b>${esc(n.v)}</b></p>`:''}${n.n?`<p>${esc(n.n)}</p>`:''}${(n.e||[]).filter(Boolean).map(x=>`<p><i>${esc(x)}</i></p>`).join('')}</div>
+  <div class="btns"><button class="no" data-a="no">✗ Không nhớ (←)</button><button class="ok" data-a="yes">✓ Nhớ (→)</button></div>`
+  :`<div class="btns"><button data-a="show">Hiện đáp án (Space)</button></div>`}
+  <div class="btns"><button data-a="close">Thoát (Esc)</button></div></div>`;
+}
+function rvEnd(){
+  mode='end';
+  const due=cards().filter(c=>isDue(c.n)).length;
+  rvEl().innerHTML=`<div class="box"><h2>🎉 Xong phiên ôn tập</h2><div class="cap">Сессия завершена</div>
+  <p>Đã nhớ ${done} thẻ. Còn ${due} thẻ đến hạn.</p>
+  <div class="btns"><button data-a="close">Trở về sơ đồ</button>${due?'<button class="ok" data-a="start">Ôn tập tiếp</button>':''}</div></div>`;
+}
+function grade(ok){
+  const c=Q.shift(),b=boxOf(c.n);
+  if(ok){
+    const nb=Math.min(7,b+1);
+    c.n.s={b:nb,d:Date.now()+INT[nb]*DAY};done++;
+  }else{
+    const nb=c.lapsed?b:Math.max(0,b-DROP);   // hạ DROP bậc, chỉ hạ 1 lần mỗi phiên
+    c.n.s={b:nb,d:Date.now()};c.lapsed=1;Q.push(c);
+  }
+  shown=false;save();rvCard();
+}
+function rvClick(e){
+  if(e.target.id==='rv')return rvClose();
+  const a=e.target.closest('[data-a]');if(!a)return;
+  const k=a.dataset.a;
+  if(k==='close')rvClose();
+  else if(k==='start')rvStart();
+  else if(k==='show'){shown=true;rvCard()}
+  else if(k==='yes')grade(true);
+  else if(k==='no')grade(false);
+}
+rb.onclick=()=>{if(document.activeElement)document.activeElement.blur();rvHome()};
+
+// Phím khi đang ôn (chặn các phím tắt khác)
+document.addEventListener('keydown',e=>{
+  if(!$('rv'))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  const k=e.code;
+  if(k==='Escape')return rvClose();
+  if(mode==='card'){
+    if(!shown&&(k==='Space'||k==='Enter'||k==='ArrowUp'||k==='ArrowDown')){shown=true;rvCard()}
+    else if(shown&&k==='ArrowRight')grade(true);
+    else if(shown&&k==='ArrowLeft')grade(false);
+  }else if(k==='Enter'){
+    const b=$('rv').querySelector('.ok');if(b)b.click();
+  }
+},true);
+// Phím R mở ôn tập
+document.addEventListener('keydown',e=>{
+  const a=document.activeElement;
+  if($('rv')||e.ctrlKey||e.metaKey||e.altKey||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
+  if(e.code==='KeyR'){e.preventDefault();rb.click()}
+});
+updBtn();
+  
 refresh();
 </script>
   <script type="module">
