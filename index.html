@@ -2,40 +2,66 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ngữ pháp tiếng Nga · Ментальные карты</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ngữ pháp tiếng Nga · Ментальные карты (Tablet & Stylus)</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--tx:#1f2430;--mut:#6b7280;--bd:#dfe3ee}
-@media(prefers-color-scheme:dark){:root{--bg:#14161c;--card:#1d2029;--tx:#e8eaf0;--mut:#9aa1b2;--bd:#2d3140}}
-*{box-sizing:border-box}
-body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;height:100vh}
-header{padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border-bottom:1px solid var(--bd)}
-h1{font-size:17px;margin:0 8px 0 0}
-button,select,input,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:5px 10px}
-button,select{cursor:pointer}
-button:hover{border-color:#4f46e5}
-main{flex:1;display:flex;min-height:0}
-#map{flex:1;overflow:auto}
-#panel{width:330px;padding:14px;background:var(--card);border-left:1px solid var(--bd);overflow:auto}
-#panel label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
-#panel input,#panel textarea{width:100%}
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1f2430;--mut:#6b7280;--bd:#dfe3ee;--pri:#4f46e5}
+@media(prefers-color-scheme:dark){:root{--bg:#14161c;--card:#1d2029;--tx:#e8eaf0;--mut:#9aa1b2;--bd:#2d3140;--pri:#6366f1}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+header{padding:8px 12px;display:flex;gap:8px;align-items:center;background:var(--card);border-bottom:1px solid var(--bd);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+header::-webkit-scrollbar{display:none}
+header>*{flex:none}
+h1{font-size:16px;margin:0 6px 0 0}
+button,select,input,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;min-height:38px}
+button,select{cursor:pointer;touch-action:manipulation}
+button:hover,button:active{border-color:var(--pri)}
+button.primary{background:var(--pri);color:#fff;border-color:var(--pri)}
+main{flex:1;display:flex;min-height:0;position:relative}
+#map{flex:1;overflow:auto;touch-action:none;cursor:grab;position:relative;user-select:none}
+#map:active{cursor:grabbing}
+#panel{width:440px;padding:16px;background:var(--card);border-left:1px solid var(--bd);overflow-y:auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+#panel label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:12px 0 4px}
+#panel input,#panel textarea{width:100%;font-size:16px}
 #panel textarea{resize:vertical}
-.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.hint{color:var(--mut)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.row button{flex:1;min-width:110px}
+.hint{color:var(--mut);font-size:13px}
 svg text{pointer-events:none}
 .nd{cursor:pointer}
-body{height:100vh;height:100dvh}
-#panel .close{float:right}
+#panel .close{float:right;padding:6px 12px;min-height:34px}
 .zoom{display:flex;gap:4px}
-@media(max-width:800px){
-  header{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding:8px 10px}
-  header>*{flex:none}
-  h1{font-size:15px}
+.zoom button{min-width:38px;padding:6px}
+
+/* Thanh công cụ nổi cho bút & cảm ứng */
+#fab{position:fixed;bottom:20px;left:20px;z-index:20;display:none;gap:8px;background:var(--card);padding:8px;border-radius:14px;border:1px solid var(--bd);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+#fab.show{display:flex;flex-wrap:wrap}
+#fab button{padding:8px 12px;font-size:14px;font-weight:500}
+
+/* Khu vực bảng vẽ viết tay (Stylus Canvas) */
+.sketch-wrap{margin-top:8px;border:1.5px solid var(--bd);border-radius:12px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.sketch-wrap.fullscreen{position:fixed;inset:12px;z-index:100;margin:0;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.sketch-bar{display:flex;gap:6px;padding:8px;background:var(--card);border-bottom:1px solid var(--bd);align-items:center;flex-wrap:wrap}
+.swatch{width:28px;height:28px;min-height:28px;border-radius:50%;padding:0;border:2px solid transparent}
+.swatch.active{border-color:var(--tx);transform:scale(1.12)}
+.sketch-bar button.tool{padding:5px 10px;min-height:32px;font-size:13px}
+.sketch-bar button.tool.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+#pad{display:block;width:100%;height:300px;touch-action:none;cursor:crosshair;background-image:radial-gradient(var(--bd) 1px,transparent 1px);background-size:18px 18px}
+.sketch-wrap.fullscreen #pad{flex:1;height:auto}
+.sketch-resize{height:18px;background:var(--card);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;color:var(--mut);font-size:12px;user-select:none}
+.sketch-wrap.fullscreen .sketch-resize{display:none}
+
+/* Chế độ xoay dọc / màn hình nhỏ trên Tablet */
+@media(max-width:900px){
   main{flex-direction:column}
-  #panel{width:auto;max-height:50%;border-left:0;border-top:1px solid var(--bd);padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  #panel{width:100%;height:56%;border-left:0;border-top:1px solid var(--bd)}
   #panel.empty{display:none}
-  input,textarea,select{font-size:16px}
-  button{padding:8px 12px}
+  #fab{bottom:calc(56% + 12px);left:12px;right:12px;justify-content:center}
+  #fab.no-panel{bottom:16px}
 }
 </style>
 </head>
@@ -45,23 +71,28 @@ body{height:100vh;height:100dvh}
   <select id="sel"></select>
   <button id="addMap">+ Sơ đồ mới</button>
   <button id="delMap">Xóa sơ đồ</button>
-  <label><input type="checkbox" id="hideV"> Ẩn tiếng Việt (tự kiểm tra)</label>
-    <span class="zoom"><button id="zo">−</button><button id="zi">+</button></span>
-  <span class="hint" title="↑↓←→: di chuyển giữa các ô · Enter: sửa ô · N: nhánh con · V: nghĩa Việt · G: giải thích · E: ví dụ · M: sơ đồ mới · Esc: thoát ô">⌨ ↑↓←→ Enter N V G E M</span>
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="hideV" style="width:18px;height:18px;min-height:auto"> Ẩn tiếng Việt</label>
+  <span class="zoom"><button id="zo" title="Thu nhỏ">−</button><button id="zReset" title="100%">100%</button><button id="zi" title="Phóng to">+</button></span>
   <button id="exp">Xuất JSON</button>
   <button id="imp">Nhập JSON</button>
-  <button id="reset">Đặt lại mặc định</button>
-    <button id="login">Đăng nhập Google</button>
+  <button id="reset">Mặc định</button>
+  <button id="login">Đăng nhập Google</button>
   <span id="syncStat" class="hint"></span>
   <input type="file" id="file" accept=".json" hidden>
 </header>
 <main>
   <div id="map"></div>
-  <div id="panel"></div>
+  <div id="fab">
+    <button id="fab_add" class="primary">+ Nhánh con</button>
+    <button id="fab_draw">✍️ Viết tay</button>
+    <button id="fab_tg">Thu gọn / Mở</button>
+    <button id="fab_del">Xóa</button>
+  </div>
+  <div id="panel" class="empty"></div>
 </main>
 <script>
 const KEY='ru-grammar-maps-v1';
-const N=(t,v,n,e,c)=>({t,v:v||'',n:n||'',e:e||[],c:c||[]});
+const N=(t,v,n,e,c,img)=>({t,v:v||'',n:n||'',e:e||[],c:c||[],img:img||''});
 
 const DEFAULT=[
 N('Падежи','6 cách (格)','Русский язык: 6 падежей. Danh từ, tính từ, đại từ biến đổi theo cách.',[],[
@@ -126,9 +157,11 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const cut=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
 
 let maps=load(),cur=0,sel=null,NODES=[];
-  let zoom=innerWidth<800?.8:1;
-const W=190,H=46,GX=250,GY=60;
+let zoom=innerWidth<900?.85:1;
+const W=200,H=52,GX=265,GY=66;
 const $=id=>document.getElementById(id);
+
+function updZoomLabel(){$('zReset').textContent=Math.round(zoom*100)+'%'}
 
 function render(){
   const root=maps[cur];let row=0,maxD=0;NODES=[];
@@ -144,42 +177,228 @@ function render(){
   const hideV=$('hideV').checked;
   let links='',nodes='';
   NODES.forEach((o,i)=>{
-    const x=o.d*GX+20,y=o.y*GY+20;
+    const x=o.d*GX+24,y=o.y*GY+24;
     if(o.p){
-      const q=pos.get(o.p),x0=q.d*GX+20+W,y0=q.y*GY+20+H/2,x1=x,y1=y+H/2,m=(x0+x1)/2;
-      links+=`<path d="M${x0} ${y0}C${m} ${y0} ${m} ${y1} ${x1} ${y1}" fill="none" stroke="hsl(${o.hue} 55% 55%)" stroke-width="2"/>`;
+      const q=pos.get(o.p),x0=q.d*GX+24+W,y0=q.y*GY+24+H/2,x1=x,y1=y+H/2,m=(x0+x1)/2;
+      links+=`<path d="M${x0} ${y0}C${m} ${y0} ${m} ${y1} ${x1} ${y1}" fill="none" stroke="hsl(${o.hue} 55% 55%)" stroke-width="2.2"/>`;
     }
     const isRoot=!o.p,s=o.n===sel;
-    const fill=isRoot?'#4f46e5':`hsl(${o.hue} 60% 50% / .18)`;
-    const stroke=isRoot?'#4f46e5':`hsl(${o.hue} 60% 50%)`;
+    const fill=isRoot?'var(--pri)':`hsl(${o.hue} 60% 50% / .18)`;
+    const stroke=isRoot?'var(--pri)':`hsl(${o.hue} 60% 50%)`;
     const col=isRoot?'#fff':'var(--tx)';
+    const hasSketch=o.n.img?' ✍️':'';
     nodes+=`<g class="nd" data-i="${i}" transform="translate(${x} ${y})">
-      <rect width="${W}" height="${H}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="${s?4:1.5}"/>
-      <text x="10" y="${hideV||!o.n.v?28:19}" font-size="14" font-weight="600" fill="${col}">${esc(cut(o.n.t,24))}</text>
-      ${hideV||!o.n.v?'':`<text x="10" y="36" font-size="11" fill="${col}" opacity=".75">${esc(cut(o.n.v,30))}</text>`}
-      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="18" fill="transparent"/><circle cx="${W}" cy="${H/2}" r="10" fill="var(--card)" stroke="${stroke}" stroke-width="1.5"/><text x="${W}" y="${H/2+4}" text-anchor="middle" font-size="13" fill="var(--tx)">${o.n.x?'+':'−'}</text></g>`:''}
+      <rect width="${W}" height="${H}" rx="12" fill="${fill}" stroke="${stroke}" stroke-width="${s?4:1.6}"/>
+      <text x="12" y="${hideV||!o.n.v?31:21}" font-size="14.5" font-weight="600" fill="${col}">${esc(cut(o.n.t,23))+hasSketch}</text>
+      ${hideV||!o.n.v?'':`<text x="12" y="40" font-size="11.5" fill="${col}" opacity=".78">${esc(cut(o.n.v,29))}</text>`}
+      ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="22" fill="transparent"/><circle cx="${W}" cy="${H/2}" r="12" fill="var(--card)" stroke="${stroke}" stroke-width="1.8"/><text x="${W}" y="${H/2+5}" text-anchor="middle" font-size="15" font-weight="bold" fill="var(--tx)">${o.n.x?'+':'−'}</text></g>`:''}
     </g>`;
   });
- const w=(maxD+1)*GX+60,h=row*GY+40;
-$('map').innerHTML=`<svg width="${w*zoom}" height="${h*zoom}" viewBox="0 0 ${w} ${h}">${links}${nodes}</svg>`;
+  const w=(maxD+1)*GX+80,h=row*GY+60;
+  $('map').innerHTML=`<svg width="${w*zoom}" height="${h*zoom}" viewBox="0 0 ${w} ${h}">${links}${nodes}</svg>`;
+  updZoomLabel();
+  updFab();
+}
+
+function updFab(){
+  const fab=$('fab');
+  if(!sel){fab.classList.remove('show');return}
+  fab.classList.add('show');
+  fab.classList.toggle('no-panel',$('panel').classList.contains('empty'));
+  $('fab_del').style.display=(maps[cur]===sel)?'none':'inline-block';
+  $('fab_tg').style.display=sel.c.length?'inline-block':'none';
+}
+
+/* ===== Logic Bảng Vẽ Viết Tay (S Pen / Stylus) ===== */
+let undoStack=[];
+function initSketchPad(){
+  const wrap=$('sketchWrap');
+  const cv=$('pad');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  let penColor=isDark?'#e8eaf0':'#1f2430';
+  let penWidth=2.5;
+  let isEraser=false;
+  let drawing=false;
+  let penOnly=false;
+  undoStack=[];
+
+  $('sw_auto').style.background=penColor;
+
+  function resizeCanvas(preserveDataUrl){
+    const rect=cv.getBoundingClientRect();
+    if(!rect.width||!rect.height)return;
+    cv.width=rect.width*dpr;
+    cv.height=rect.height*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineCap='round';
+    ctx.lineJoin='round';
+    if(preserveDataUrl){
+      const im=new Image();
+      im.onload=()=>ctx.drawImage(im,0,0,im.width/dpr,im.height/dpr);
+      im.src=preserveDataUrl;
+    }
+  }
+
+  resizeCanvas(sel.img||'');
+
+  function snapshot(){
+    undoStack.push(cv.toDataURL('image/png'));
+    if(undoStack.length>15)undoStack.shift();
+  }
+
+  function commitImg(){
+    const blank=document.createElement('canvas');
+    blank.width=cv.width;blank.height=cv.height;
+    sel.img=(cv.toDataURL()===blank.toDataURL())?'':cv.toDataURL('image/png');
+    save();
+    render();
+  }
+
+  function getPos(e){
+    const r=cv.getBoundingClientRect();
+    return {x:e.clientX-r.left,y:e.clientY-r.top,p:e.pressure||0.5};
+  }
+
+  cv.onpointerdown=e=>{
+    if(penOnly && e.pointerType!=='pen')return;
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    snapshot();
+    drawing=true;
+    const pt=getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pt.x,pt.y);
+  };
+
+  cv.onpointermove=e=>{
+    if(!drawing)return;
+    if(penOnly && e.pointerType!=='pen')return;
+    e.preventDefault();
+    const pt=getPos(e);
+    ctx.globalCompositeOperation=isEraser?'destination-out':'source-over';
+    ctx.strokeStyle=penColor;
+    const pressureFactor=(e.pointerType==='pen'&&e.pressure>0)?(0.6+e.pressure*0.9):1;
+    ctx.lineWidth=(isEraser?18:penWidth)*pressureFactor;
+    ctx.lineTo(pt.x,pt.y);
+    ctx.stroke();
+  };
+
+  const endStroke=()=>{
+    if(!drawing)return;
+    drawing=false;
+    ctx.closePath();
+    commitImg();
+  };
+  cv.onpointerup=endStroke;
+  cv.onpointercancel=endStroke;
+
+  document.querySelectorAll('.swatch').forEach(btn=>{
+    btn.onclick=()=>{
+      isEraser=false;
+      $('t_erase').classList.remove('active');
+      document.querySelectorAll('.swatch').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      penColor=btn.dataset.c==='auto'?(isDark?'#e8eaf0':'#1f2430'):btn.dataset.c;
+    };
+  });
+
+  $('t_erase').onclick=()=>{
+    isEraser=!isEraser;
+    $('t_erase').classList.toggle('active',isEraser);
+  };
+
+  $('t_penonly').onclick=()=>{
+    penOnly=!penOnly;
+    $('t_penonly').classList.toggle('active',penOnly);
+    $('t_penonly').textContent=penOnly?'✒️ Chỉ bút: BẬT':'✒️ Chỉ bút: TẮT';
+  };
+
+  $('t_full').onclick=()=>{
+    const data=cv.toDataURL('image/png');
+    const isFull=wrap.classList.toggle('fullscreen');
+    $('t_full').classList.toggle('active',isFull);
+    $('t_full').textContent=isFull?'🗗 Thu nhỏ':'⛶ Phóng to';
+    requestAnimationFrame(()=>resizeCanvas(sel.img?data:''));
+  };
+
+  const resizer=$('sketchResize');
+  let resizing=false,startY=0,startH=0,savedData='';
+  resizer.onpointerdown=e=>{
+    e.preventDefault();
+    resizer.setPointerCapture(e.pointerId);
+    resizing=true;
+    startY=e.clientY;
+    startH=cv.getBoundingClientRect().height;
+    savedData=sel.img?cv.toDataURL('image/png'):'';
+  };
+  resizer.onpointermove=e=>{
+    if(!resizing)return;
+    const newH=Math.max(180,Math.min(700,startH+(e.clientY-startY)));
+    cv.style.height=newH+'px';
+    resizeCanvas(savedData);
+  };
+  resizer.onpointerup=()=>{if(resizing){resizing=false;commitImg()}};
+  resizer.onpointercancel=()=>{if(resizing){resizing=false;commitImg()}};
+
+  $('t_undo').onclick=()=>{
+    if(!undoStack.length)return;
+    const prev=undoStack.pop();
+    const rect=cv.getBoundingClientRect();
+    ctx.globalCompositeOperation='source-over';
+    ctx.clearRect(0,0,rect.width,rect.height);
+    const im=new Image();
+    im.onload=()=>{ctx.drawImage(im,0,0,im.width/dpr,im.height/dpr);commitImg()};
+    im.src=prev;
+  };
+
+  $('t_clear').onclick=()=>{
+    if(!confirm('Xóa toàn bộ nét viết tay của nhánh này?'))return;
+    snapshot();
+    const rect=cv.getBoundingClientRect();
+    ctx.globalCompositeOperation='source-over';
+    ctx.clearRect(0,0,rect.width,rect.height);
+    commitImg();
+  };
 }
 
 function panel(){
   const p=$('panel');
   p.classList.toggle('empty',!sel);
-  if(!sel){p.innerHTML='<p class="hint">Bấm vào một ô trên sơ đồ để xem và sửa nội dung.<br>Нажмите на узел, чтобы увидеть и изменить.</p>';return}
+  updFab();
+  if(!sel){p.innerHTML='<p class="hint">Chạm vào một ô trên sơ đồ để xem, sửa hoặc viết ghi chú bằng bút.<br>Нажмите на узел, чтобы открыть заметки.</p>';return}
   const isRoot=maps[cur]===sel;
   p.innerHTML=`
-  <label>Tiêu đề / Заголовок (tiếng Nga)</label><input id="f_t" value="${esc(sel.t)}">
-  <label>Nghĩa tiếng Việt / По-вьетнамски</label><input id="f_v" value="${esc(sel.v)}">
-  <label>Giải thích / Объяснение</label><textarea id="f_n" rows="5">${esc(sel.n)}</textarea>
-  <label>Ví dụ (mỗi dòng một câu) / Примеры</label><textarea id="f_e" rows="5">${esc(sel.e.join('\n'))}</textarea>
+  <button class="close" id="b_x">✕ Đóng</button>
+  <label>Tiêu đề / Заголовок (tiếng Nga)</label><input id="f_t" enterkeyhint="next" value="${esc(sel.t)}">
+  <label>Nghĩa tiếng Việt / По-вьетнамски</label><input id="f_v" enterkeyhint="next" value="${esc(sel.v)}">
+  <label>✍️ Ghi chú viết tay (S Pen / Stylus)</label>
+  <div class="sketch-wrap" id="sketchWrap">
+    <div class="sketch-bar">
+      <button class="swatch active" id="sw_auto" data-c="auto" title="Màu chữ mặc định"></button>
+      <button class="swatch" data-c="#ef4444" style="background:#ef4444" title="Đỏ"></button>
+      <button class="swatch" data-c="#2563eb" style="background:#2563eb" title="Xanh dương"></button>
+      <button class="swatch" data-c="#16a34a" style="background:#16a34a" title="Xanh lá"></button>
+      <button class="tool" id="t_erase">Tẩy</button>
+      <button class="tool" id="t_undo">Hoàn tác</button>
+      <button class="tool" id="t_clear">Xóa</button>
+      <button class="tool" id="t_penonly" title="Chống chạm nhầm lòng bàn tay">✒️ Chỉ bút: TẮT</button>
+      <button class="tool" id="t_full" title="Mở rộng toàn màn hình">⛶ Phóng to</button>
+    </div>
+    <canvas id="pad"></canvas>
+    <div class="sketch-resize" id="sketchResize">⋯ Kéo xuống để mở rộng khung viết ⋯</div>
+  </div>
+  <label>Giải thích / Объяснение</label><textarea id="f_n" rows="3">${esc(sel.n)}</textarea>
+  <label>Ví dụ (mỗi dòng một câu) / Примеры</label><textarea id="f_e" rows="3">${esc(sel.e.join('\n'))}</textarea>
   <div class="row">
-    <button id="b_add">+ Nhánh con / Дочерний</button>
-    ${isRoot?'':'<button id="b_del">Xóa / Удалить</button>'}
-    ${sel.c.length?'<button id="b_tg">Thu gọn / Свернуть</button>':''}
+    <button id="b_add" class="primary">+ Nhánh con</button>
+    ${sel.c.length?'<button id="b_tg">Thu gọn / Mở</button>':''}
+    ${isRoot?'':'<button id="b_del">Xóa nhánh</button>'}
   </div>`;
-    p.insertAdjacentHTML('afterbegin','<button class="close" id="b_x">✕</button>');
+
   $('b_x').onclick=()=>{sel=null;render();panel()};
   [['t','t'],['v','v'],['n','n']].forEach(([id,k])=>$('f_'+id).oninput=e=>{sel[k]=e.target.value;save();render()});
   $('f_e').oninput=e=>{sel.e=e.target.value.split('\n');save()};
@@ -187,13 +406,78 @@ function panel(){
   if($('b_del'))$('b_del').onclick=()=>{
     const o=NODES.find(o=>o.n===sel);o.p.c.splice(o.p.c.indexOf(sel),1);sel=o.p;save();render();panel()};
   if($('b_tg'))$('b_tg').onclick=()=>{sel.x=sel.x?0:1;save();render()};
+
+  initSketchPad();
 }
 
-$('map').onclick=e=>{
+/* ===== Kéo thả sơ đồ (Pan) & Chụm 2 ngón phóng to/thu nhỏ (Pinch-to-Zoom) ===== */
+const mapEl=$('map');
+let pointers=new Map(),prevDist=0,isPanning=false,panMoved=false,startX=0,startY=0,scrollL=0,scrollT=0;
+
+mapEl.onpointerdown=e=>{
+  pointers.set(e.pointerId,e);
+  if(pointers.size===1){
+    isPanning=true;panMoved=false;
+    startX=e.clientX;startY=e.clientY;
+    scrollL=mapEl.scrollLeft;scrollT=mapEl.scrollTop;
+  }else if(pointers.size===2){
+    isPanning=false;
+    const pts=[...pointers.values()];
+    prevDist=Math.hypot(pts[0].clientX-pts[1].clientX,pts[0].clientY-pts[1].clientY);
+  }
+};
+
+mapEl.onpointermove=e=>{
+  if(!pointers.has(e.pointerId))return;
+  pointers.set(e.pointerId,e);
+  if(pointers.size===1 && isPanning){
+    const dx=e.clientX-startX,dy=e.clientY-startY;
+    if(Math.abs(dx)>6||Math.abs(dy)>6)panMoved=true;
+    if(panMoved){
+      mapEl.scrollLeft=scrollL-dx;
+      mapEl.scrollTop=scrollT-dy;
+    }
+  }else if(pointers.size===2){
+    panMoved=true;
+    const pts=[...pointers.values()];
+    const dist=Math.hypot(pts[0].clientX-pts[1].clientX,pts[0].clientY-pts[1].clientY);
+    if(prevDist>0){
+      const delta=(dist-prevDist)*0.004;
+      const nextZoom=Math.min(2.2,Math.max(0.4,zoom+delta));
+      if(Math.abs(nextZoom-zoom)>0.01){zoom=nextZoom;render()}
+    }
+    prevDist=dist;
+  }
+};
+
+const clearPointer=e=>{
+  pointers.delete(e.pointerId);
+  if(pointers.size<2)prevDist=0;
+  if(pointers.size===0)isPanning=false;
+};
+mapEl.onpointerup=clearPointer;
+mapEl.onpointercancel=clearPointer;
+
+mapEl.onclick=e=>{
+  if(panMoved){panMoved=false;return}
   const tg=e.target.closest('[data-tg]');
   if(tg){const n=NODES[tg.dataset.tg].n;n.x=n.x?0:1;save();render();return}
   const g=e.target.closest('.nd');
   if(g){sel=NODES[g.dataset.i].n;render();panel()}
+};
+
+/* Kết nối thanh công cụ nổi (FAB) */
+$('fab_add').onclick=()=>{if(!sel)return;const k=N('Новый','Mới');sel.c.push(k);sel.x=0;sel=k;save();render();panel()};
+$('fab_draw').onclick=()=>{
+  if(!sel)return;
+  if($('panel').classList.contains('empty'))panel();
+  const cv=$('pad');
+  if(cv)cv.scrollIntoView({behavior:'smooth',block:'center'});
+};
+$('fab_tg').onclick=()=>{if(!sel||!sel.c.length)return;sel.x=sel.x?0:1;save();render()};
+$('fab_del').onclick=()=>{
+  if(!sel||maps[cur]===sel)return;
+  const o=NODES.find(o=>o.n===sel);o.p.c.splice(o.p.c.indexOf(sel),1);sel=o.p;save();render();panel();
 };
 
 function fillSel(){$('sel').innerHTML=maps.map((m,i)=>`<option value="${i}">${esc(m.t)}</option>`).join('');$('sel').value=cur}
@@ -210,94 +494,48 @@ $('file').onchange=e=>{
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d)||!d.length)throw 0;maps=d;cur=0;save();refresh()}catch(x){alert('File JSON không hợp lệ.')}};
   r.readAsText(f);e.target.value='';
 };
-$('zi').onclick=()=>{zoom=Math.min(2,zoom+.2);render()};
+$('zi').onclick=()=>{zoom=Math.min(2.2,zoom+.2);render()};
 $('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
-  function reveal(o){
-  const m=$('map'),x=(o.d*GX+20)*zoom,y=(o.y*GY+20)*zoom,w=W*zoom,h=H*zoom;
-  if(x<m.scrollLeft+10)m.scrollLeft=x-20;
-  else if(x+w>m.scrollLeft+m.clientWidth-10)m.scrollLeft=x+w-m.clientWidth+20;
-  if(y<m.scrollTop+10)m.scrollTop=y-20;
-  else if(y+h>m.scrollTop+m.clientHeight-10)m.scrollTop=y+h-m.clientHeight+20;
-}
-function nav(dir){
-  if(!sel){sel=maps[cur];render();panel();return}
-  let o=NODES.find(x=>x.n===sel);if(!o)return;
-  const near=(list)=>list.reduce((a,b)=>Math.abs(b.y-o.y)<Math.abs(a.y-o.y)?b:a);
-  let t=null;
-  if(dir==='ArrowLeft'){
-    t=NODES.find(x=>x.n===o.p);
-  }else if(dir==='ArrowRight'){
-    if(o.n.x&&o.n.c.length){o.n.x=0;save();render();o=NODES.find(x=>x.n===sel)}
-    const k=NODES.filter(x=>x.p===o.n);
-    if(k.length)t=near(k);
-  }else{
-    const up=dir==='ArrowUp';
-    const c=NODES.filter(x=>x.d===o.d&&(up?x.y<o.y:x.y>o.y));
-    if(c.length)t=near(c);
-  }
-  if(t){sel=t.n;render();panel();reveal(t)}
-}
-document.addEventListener('click',e=>{const b=e.target.closest('button');if(b)b.blur()});
-document.addEventListener('keydown',e=>{
-  const a=document.activeElement;
-  const typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
-  if(typing){if(e.key==='Escape')a.blur();return}
-  if(e.ctrlKey||e.metaKey||e.altKey)return;
-  const go=id=>{
-    e.preventDefault();
-    if(!sel){sel=maps[cur];render();panel()}
-    const el=$(id);if(!el)return;
-    el.focus();const L=el.value.length;el.setSelectionRange(L,L);
-  };
-  switch(e.code){
-    case 'ArrowUp':case 'ArrowDown':case 'ArrowLeft':case 'ArrowRight':
-      e.preventDefault();nav(e.code);break;
-    case 'Enter':case 'NumpadEnter':
-      if(a&&a.tagName==='BUTTON')return;
-      go('f_t');break;
-    case 'KeyN':
-      e.preventDefault();
-      if(!sel){sel=maps[cur];render();panel()}
-      $('b_add').click();
-      $('f_t').focus();$('f_t').select();
-      break;
-    case 'KeyV':go('f_v');break;
-    case 'KeyG':go('f_n');break;
-    case 'KeyE':go('f_e');break;
-    case 'KeyM':e.preventDefault();$('addMap').click();break;
-  }
-});
-  /* ===== Ôn tập ngắt quãng / Интервальное повторение ===== */
+$('zReset').onclick=()=>{zoom=1;render()};
+
+/* ===== Ôn tập ngắt quãng / Интервальное повторение (Chỉ các ô có nét vẽ) ===== */
 const INT=[0,1,3,7,14,30,60,120],DROP=2,BATCH=20,DAY=864e5;
 const LAB=['Chưa ôn','1 ngày','3 ngày','7 ngày','14 ngày','30 ngày','60 ngày','120 ngày'];
 let Q=[],total=0,done=0,shown=false,mode='';
 const rvStyle=document.createElement('style');
 rvStyle.textContent=`
 #rv{position:fixed;inset:0;background:rgba(15,16,25,.78);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px}
-#rv .box{background:var(--card);border:1px solid var(--bd);border-radius:14px;width:min(560px,100%);max-height:100%;overflow:auto;padding:20px}
-#rv h2{margin:4px 0;font-size:26px}
+#rv .box{background:var(--card);border:1px solid var(--bd);border-radius:16px;width:min(580px,100%);max-height:100%;overflow:auto;padding:22px}
+#rv h2{margin:6px 0;font-size:26px}
 #rv .cap{color:var(--mut);font-size:13px}
 #rv .btns{display:flex;gap:10px;margin-top:14px}
-#rv .btns button{flex:1;padding:12px;font-size:16px}
+#rv .btns button{flex:1;padding:14px;font-size:16px}
 #rv .ok{border-color:#16a34a;color:#16a34a}
 #rv .no{border-color:#dc2626;color:#dc2626}
-#rv .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin:12px 0}
-#rv .grid div{border:1px solid var(--bd);border-radius:8px;padding:6px 8px;font-size:13px}
+#rv .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:12px 0}
+#rv .grid div{border:1px solid var(--bd);border-radius:10px;padding:8px;font-size:13px}
 #rv .grid b{display:block;font-size:18px}
-#rv .ans{margin-top:14px;padding-top:10px;border-top:1px solid var(--bd)}
-#rv .ans p{margin:6px 0}`;
+#rv .ans{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
+#rv .ans p{margin:6px 0}
+#rv .ans img{max-width:100%;border:1px solid var(--bd);border-radius:10px;margin-top:8px;background:var(--bg)}`;
 document.head.appendChild(rvStyle);
 
 const isDue=n=>!n.s||n.s.d<=Date.now();
 const boxOf=n=>(n.s&&n.s.b)||0;
 function cards(){
-  return maps
-    .filter(m=>m.v||m.n||(m.e&&m.e.some(Boolean)))
-    .map(m=>({n:m,path:[m.t],map:'Sơ đồ / Карта'}));
+  const out=[];
+  function walkCards(node,path,mapTitle){
+    if(node.img){
+      out.push({n:node,path:[...path,node.t],map:mapTitle});
+    }
+    (node.c||[]).forEach(ch=>walkCards(ch,[...path,node.t],mapTitle));
+  }
+  maps.forEach(m=>walkCards(m,[],m.t));
+  return out;
 }
 const rb=document.createElement('button');rb.id='rvBtn';
 document.querySelector('header').appendChild(rb);
-function updBtn(){rb.textContent='🔁 Ôn tập ('+cards().filter(c=>isDue(c.n)).length+')'}
+function updBtn(){rb.textContent='🔁 Ôn nét vẽ ('+cards().filter(c=>isDue(c.n)).length+')'}
 const _render=window.render;
 window.render=function(){_render();updBtn()};
 
@@ -311,10 +549,10 @@ function rvHome(){
   mode='home';
   const all=cards(),due=all.filter(c=>isDue(c.n)),cnt=Array(8).fill(0);
   all.forEach(c=>cnt[boxOf(c.n)]++);
-  rvEl().innerHTML=`<div class="box"><h2>🔁 Ôn tập ngắt quãng</h2><div class="cap">Интервальное повторение</div>
+  rvEl().innerHTML=`<div class="box"><h2>🔁 Ôn tập nét vẽ tay</h2><div class="cap">Повторение заметок от руки</div>
   <div class="grid">${cnt.map((x,i)=>`<div>${LAB[i]}<b>${x}</b></div>`).join('')}</div>
-  <p>Đến hạn: <b>${due.length}</b> / ${all.length} thẻ</p>
-  <div class="btns"><button data-a="close">Đóng (Esc)</button>${due.length?`<button class="ok" data-a="start">Bắt đầu (${Math.min(due.length,BATCH)})</button>`:''}</div></div>`;
+  <p>Đến hạn: <b>${due.length}</b> / ${all.length} ô có nét vẽ</p>
+  <div class="btns"><button data-a="close">Đóng</button>${due.length?`<button class="ok" data-a="start">Bắt đầu (${Math.min(due.length,BATCH)})</button>`:''}</div></div>`;
 }
 function rvStart(){
   const key=c=>c.n.s?c.n.s.d:9e15;
@@ -324,20 +562,20 @@ function rvStart(){
 function rvCard(){
   if(!Q.length)return rvEnd();
   mode='card';
-  const c=Q[0],n=c.n,ctx=[c.map].concat(c.path.slice(0,-1)).join(' › ');
+  const c=Q[0],n=c.n,ctx=[c.map].concat(c.path.slice(1,-1)).join(' › ');
   rvEl().innerHTML=`<div class="box">
-  <div class="cap">Đã nhớ ${done}/${total} · còn ${Q.length} thẻ · nhóm: ${LAB[boxOf(n)]}</div>
+  <div class="cap">Đã nhớ ${done}/${total} · còn ${Q.length} ô · nhóm: ${LAB[boxOf(n)]}</div>
   <div class="cap">${esc(ctx)}</div><h2>${esc(n.t)}</h2>
-  ${shown?`<div class="ans">${n.v?`<p><b>${esc(n.v)}</b></p>`:''}${n.n?`<p>${esc(n.n)}</p>`:''}${(n.e||[]).filter(Boolean).map(x=>`<p><i>${esc(x)}</i></p>`).join('')}</div>
-  <div class="btns"><button class="no" data-a="no">✗ Không nhớ (←)</button><button class="ok" data-a="yes">✓ Nhớ (→)</button></div>`
-  :`<div class="btns"><button data-a="show">Hiện đáp án (Space)</button></div>`}
-  <div class="btns"><button data-a="close">Thoát (Esc)</button></div></div>`;
+  ${shown?`<div class="ans"><img src="${n.img}" alt="Ghi chú viết tay">${n.v?`<p><b>${esc(n.v)}</b></p>`:''}${n.n?`<p>${esc(n.n)}</p>`:''}${(n.e||[]).filter(Boolean).map(x=>`<p><i>${esc(x)}</i></p>`).join('')}</div>
+  <div class="btns"><button class="no" data-a="no">✗ Không nhớ</button><button class="ok" data-a="yes">✓ Nhớ</button></div>`
+  :`<div class="btns"><button data-a="show">Hiện nét vẽ & đáp án</button></div>`}
+  <div class="btns"><button data-a="close">Thoát</button></div></div>`;
 }
 function rvEnd(){
   mode='end';
   const due=cards().filter(c=>isDue(c.n)).length;
   rvEl().innerHTML=`<div class="box"><h2>🎉 Xong phiên ôn tập</h2><div class="cap">Сессия завершена</div>
-  <p>Đã nhớ ${done} thẻ. Còn ${due} thẻ đến hạn.</p>
+  <p>Đã nhớ ${done} ô có nét vẽ. Còn ${due} ô đến hạn.</p>
   <div class="btns"><button data-a="close">Trở về sơ đồ</button>${due?'<button class="ok" data-a="start">Ôn tập tiếp</button>':''}</div></div>`;
 }
 function grade(ok){
@@ -346,7 +584,7 @@ function grade(ok){
     const nb=Math.min(7,b+1);
     c.n.s={b:nb,d:Date.now()+INT[nb]*DAY};done++;
   }else{
-    const nb=c.lapsed?b:Math.max(0,b-DROP);   // hạ DROP bậc, chỉ hạ 1 lần mỗi phiên
+    const nb=c.lapsed?b:Math.max(0,b-DROP);
     c.n.s={b:nb,d:Date.now()};c.lapsed=1;Q.push(c);
   }
   shown=false;save();rvCard();
@@ -362,32 +600,10 @@ function rvClick(e){
   else if(k==='no')grade(false);
 }
 rb.onclick=()=>{if(document.activeElement)document.activeElement.blur();rvHome()};
-
-// Phím khi đang ôn (chặn các phím tắt khác)
-document.addEventListener('keydown',e=>{
-  if(!$('rv'))return;
-  e.preventDefault();e.stopImmediatePropagation();
-  const k=e.code;
-  if(k==='Escape')return rvClose();
-  if(mode==='card'){
-    if(!shown&&(k==='Space'||k==='Enter'||k==='ArrowUp'||k==='ArrowDown')){shown=true;rvCard()}
-    else if(shown&&k==='ArrowRight')grade(true);
-    else if(shown&&k==='ArrowLeft')grade(false);
-  }else if(k==='Enter'){
-    const b=$('rv').querySelector('.ok');if(b)b.click();
-  }
-},true);
-// Phím R mở ôn tập
-document.addEventListener('keydown',e=>{
-  const a=document.activeElement;
-  if($('rv')||e.ctrlKey||e.metaKey||e.altKey||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
-  if(e.code==='KeyR'){e.preventDefault();rb.click()}
-});
 updBtn();
-  
 refresh();
 </script>
-  <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -406,7 +622,6 @@ let user = null, timer = null;
 const stat = t => { document.getElementById('syncStat').textContent = t; };
 const ref = () => doc(db, 'ngupham', user.uid);
 
-// Bọc hàm save() cũ: mỗi lần lưu thì ghi thời gian và đẩy lên đám mây (chờ 1,5 giây)
 const origSave = window.save;
 window.save = function () {
   origSave();
@@ -443,6 +658,13 @@ onAuthStateChanged(auth, u => {
   btn.textContent = u ? 'Đăng xuất (' + u.email + ')' : 'Đăng nhập Google';
   if (u) pull(); else stat('');
 });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW error:', err));
+  });
+}
+
 </script>
+
 </body>
 </html>
