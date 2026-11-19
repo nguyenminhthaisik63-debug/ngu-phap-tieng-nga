@@ -55,6 +55,11 @@ svg text{pointer-events:none}
 .sketch-resize{height:18px;background:var(--card);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;color:var(--mut);font-size:12px;user-select:none}
 .sketch-wrap.fullscreen .sketch-resize{display:none}
 
+/* Ảnh đính kèm trong từng nhánh */
+.pic-box{margin-top:8px;border:1.5px solid var(--bd);border-radius:12px;padding:10px;background:var(--bg)}
+.pic-box img{display:block;max-width:100%;max-height:240px;border-radius:8px;margin-top:10px;object-fit:contain}
+.pic-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
 /* Chế độ xoay dọc / màn hình nhỏ trên Tablet */
 @media(max-width:900px){
   main{flex-direction:column}
@@ -92,7 +97,7 @@ svg text{pointer-events:none}
 </main>
 <script>
 const KEY='ru-grammar-maps-v1';
-const N=(t,v,n,e,c,img)=>({t,v:v||'',n:n||'',e:e||[],c:c||[],img:img||''});
+const N=(t,v,n,e,c,img,pic)=>({t,v:v||'',n:n||'',e:e||[],c:c||[],img:img||'',pic:pic||''});
 
 const DEFAULT=[
 N('Падежи','6 cách (格)','Русский язык: 6 падежей. Danh từ, tính từ, đại từ biến đổi theo cách.',[],[
@@ -186,10 +191,10 @@ function render(){
     const fill=isRoot?'var(--pri)':`hsl(${o.hue} 60% 50% / .18)`;
     const stroke=isRoot?'var(--pri)':`hsl(${o.hue} 60% 50%)`;
     const col=isRoot?'#fff':'var(--tx)';
-    const hasSketch=o.n.img?' ✍️':'';
+    const badge=(o.n.img?' ✍️':'')+(o.n.pic?' 🖼':'');
     nodes+=`<g class="nd" data-i="${i}" transform="translate(${x} ${y})">
       <rect width="${W}" height="${H}" rx="12" fill="${fill}" stroke="${stroke}" stroke-width="${s?4:1.6}"/>
-      <text x="12" y="${hideV||!o.n.v?31:21}" font-size="14.5" font-weight="600" fill="${col}">${esc(cut(o.n.t,23))+hasSketch}</text>
+      <text x="12" y="${hideV||!o.n.v?31:21}" font-size="14.5" font-weight="600" fill="${col}">${esc(cut(o.n.t,21))+badge}</text>
       ${hideV||!o.n.v?'':`<text x="12" y="40" font-size="11.5" fill="${col}" opacity=".78">${esc(cut(o.n.v,29))}</text>`}
       ${o.n.c.length?`<g data-tg="${i}"><circle cx="${W}" cy="${H/2}" r="22" fill="transparent"/><circle cx="${W}" cy="${H/2}" r="12" fill="var(--card)" stroke="${stroke}" stroke-width="1.8"/><text x="${W}" y="${H/2+5}" text-anchor="middle" font-size="15" font-weight="bold" fill="var(--tx)">${o.n.x?'+':'−'}</text></g>`:''}
     </g>`;
@@ -391,6 +396,15 @@ function panel(){
     <canvas id="pad"></canvas>
     <div class="sketch-resize" id="sketchResize">⋯ Kéo xuống để mở rộng khung viết ⋯</div>
   </div>
+  <label>🖼 Chèn hình ảnh từ máy / Изображение</label>
+  <div class="pic-box">
+    <div class="pic-actions">
+      <button type="button" class="tool" id="b_pic">📷 Chọn ảnh</button>
+      ${sel.pic?'<button type="button" class="tool" id="b_pic_del">Xóa ảnh</button>':''}
+      <input type="file" id="pic_file" accept="image/*" hidden>
+    </div>
+    ${sel.pic?`<img src="${sel.pic}" alt="Ảnh minh họa">`:''}
+  </div>
   <label>Giải thích / Объяснение</label><textarea id="f_n" rows="3">${esc(sel.n)}</textarea>
   <label>Ví dụ (mỗi dòng một câu) / Примеры</label><textarea id="f_e" rows="3">${esc(sel.e.join('\n'))}</textarea>
   <div class="row">
@@ -402,6 +416,31 @@ function panel(){
   $('b_x').onclick=()=>{sel=null;render();panel()};
   [['t','t'],['v','v'],['n','n']].forEach(([id,k])=>$('f_'+id).oninput=e=>{sel[k]=e.target.value;save();render()});
   $('f_e').oninput=e=>{sel.e=e.target.value.split('\n');save()};
+
+  $('b_pic').onclick=()=>$('pic_file').click();
+  $('pic_file').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        const maxW=960,scale=Math.min(1,maxW/im.width);
+        const c=document.createElement('canvas');
+        c.width=Math.round(im.width*scale);
+        c.height=Math.round(im.height*scale);
+        c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        sel.pic=c.toDataURL('image/jpeg',0.82);
+        save();render();panel();
+      };
+      im.src=r.result;
+    };
+    r.readAsDataURL(f);
+    e.target.value='';
+  };
+  if($('b_pic_del'))$('b_pic_del').onclick=()=>{
+    sel.pic='';save();render();panel();
+  };
+
   $('b_add').onclick=()=>{const k=N('Новый','Mới');sel.c.push(k);sel.x=0;sel=k;save();render();panel()};
   if($('b_del'))$('b_del').onclick=()=>{
     const o=NODES.find(o=>o.n===sel);o.p.c.splice(o.p.c.indexOf(sel),1);sel=o.p;save();render();panel()};
@@ -566,7 +605,7 @@ function rvCard(){
   rvEl().innerHTML=`<div class="box">
   <div class="cap">Đã nhớ ${done}/${total} · còn ${Q.length} ô · nhóm: ${LAB[boxOf(n)]}</div>
   <div class="cap">${esc(ctx)}</div><h2>${esc(n.t)}</h2>
-  ${shown?`<div class="ans"><img src="${n.img}" alt="Ghi chú viết tay">${n.v?`<p><b>${esc(n.v)}</b></p>`:''}${n.n?`<p>${esc(n.n)}</p>`:''}${(n.e||[]).filter(Boolean).map(x=>`<p><i>${esc(x)}</i></p>`).join('')}</div>
+  ${shown?`<div class="ans"><img src="${n.img}" alt="Ghi chú viết tay">${n.pic?`<img src="${n.pic}" alt="Ảnh minh họa">`:''}${n.v?`<p><b>${esc(n.v)}</b></p>`:''}${n.n?`<p>${esc(n.n)}</p>`:''}${(n.e||[]).filter(Boolean).map(x=>`<p><i>${esc(x)}</i></p>`).join('')}</div>
   <div class="btns"><button class="no" data-a="no">✗ Không nhớ</button><button class="ok" data-a="yes">✓ Nhớ</button></div>`
   :`<div class="btns"><button data-a="show">Hiện nét vẽ & đáp án</button></div>`}
   <div class="btns"><button data-a="close">Thoát</button></div></div>`;
@@ -658,13 +697,22 @@ onAuthStateChanged(auth, u => {
   btn.textContent = u ? 'Đăng xuất (' + u.email + ')' : 'Đăng nhập Google';
   if (u) pull(); else stat('');
 });
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW error:', err));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            location.reload();
+          }
+        });
+      });
+    }).catch(err => console.error('SW error:', err));
   });
 }
-
 </script>
-
 </body>
 </html>
