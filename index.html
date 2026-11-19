@@ -70,12 +70,22 @@ svg text{pointer-events:none}
   #fab{bottom:calc(56% + 12px);left:12px;right:12px;justify-content:center}
   #fab.no-panel{bottom:16px}
 }
+
+/* Tìm kiếm nhanh & trạng thái đồng bộ */
+#searchBox{min-width:150px;max-width:220px;padding:6px 10px;min-height:36px;font-size:14px}
+#searchRes{position:fixed;top:56px;left:12px;z-index:40;width:min(380px,calc(100vw - 24px));max-height:60vh;overflow-y:auto;background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22);display:none;padding:6px}
+#searchRes.show{display:block}
+.sr-item{padding:8px 10px;border-radius:8px;cursor:pointer;border-bottom:1px solid var(--bd)}
+.sr-item:last-child{border-bottom:0}
+.sr-item:hover{background:var(--bg)}
+.sr-item b{display:block;font-size:14px}
+.sr-item small{color:var(--mut);font-size:12px}
 </style>
 </head>
 <body>
 <header>
   <h1>🧠 Sơ đồ tư duy · Ментальные карты</h1>
-  <select id="sel"></select>
+  <input id="searchBox" type="search" placeholder="🔍 Tìm ngữ pháp..." autocomplete="off"><select id="sel"></select>
   <button id="backParent" class="link-btn" style="display:none">↖ Về sơ đồ chính</button>
   <button id="addMap">+ Sơ đồ mới</button>
   <button id="delMap">Xóa sơ đồ</button>
@@ -85,9 +95,11 @@ svg text{pointer-events:none}
   <button id="imp">Nhập JSON</button>
   <button id="reset">Mặc định</button>
   <button id="login">Đăng nhập Google</button>
+  <button id="syncNow" style="display:none" title="Đồng bộ ngay">🔄 Đồng bộ</button>
   <span id="syncStat" class="hint"></span>
   <input type="file" id="file" accept=".json" hidden>
 </header>
+<div id="searchRes"></div>
 <main>
   <div id="map"></div>
   <div id="fab">
@@ -213,7 +225,13 @@ function load(){
   }catch(e){}
   return linkSharedNodes(JSON.parse(JSON.stringify(DEFAULT)));
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(maps))}catch(e){}}
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(maps));
+  }catch(e){
+    alert('Bộ nhớ trình duyệt đã đầy (quá ~5MB). Hãy xuất JSON dự phòng hoặc bớt ảnh đính kèm để tránh mất dữ liệu!');
+  }
+}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cut=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
 
@@ -688,6 +706,41 @@ $('zi').onclick=()=>{zoom=Math.min(2.2,zoom+.2);render()};
 $('zo').onclick=()=>{zoom=Math.max(.4,zoom-.2);render()};
 $('zReset').onclick=()=>{zoom=1;render()};
 
+
+/* ===== Tìm kiếm nhanh ngữ pháp ===== */
+const sBox=$('searchBox'),sRes=$('searchRes');
+function runSearch(q){
+  q=(q||'').trim().toLowerCase();
+  if(!q){sRes.classList.remove('show');sRes.innerHTML='';return}
+  const hits=[],seen=new Set();
+  maps.forEach((m,mi)=>{
+    (function walk(n,path){
+      const hay=(n.t+' '+n.v+' '+n.n+' '+(n.e||[]).join(' ')).toLowerCase();
+      if(hay.includes(q)&&!seen.has(n.id+'_'+mi)){
+        seen.add(n.id+'_'+mi);
+        hits.push({mi,n,path:[...path,n.t]});
+      }
+      (n.c||[]).forEach(ch=>walk(ch,[...path,n.t]));
+    })(m,[]);
+  });
+  if(!hits.length){
+    sRes.innerHTML='<div class="sr-item"><small>Không tìm thấy kết quả phù hợp.</small></div>';
+  }else{
+    sRes.innerHTML=hits.slice(0,30).map((h,idx)=>`<div class="sr-item" data-hi="${idx}"><b>${esc(h.n.t)}${h.n.v?' · '+esc(h.n.v):''}</b><small>${esc(h.path.join(' › '))}</small></div>`).join('');
+    sRes.querySelectorAll('[data-hi]').forEach(el=>{
+      el.onclick=()=>{
+        const h=hits[+el.dataset.hi];
+        cur=h.mi;sel=h.n;
+        sBox.value='';sRes.classList.remove('show');
+        fillSel();render();panel();
+      };
+    });
+  }
+  sRes.classList.add('show');
+}
+sBox.oninput=e=>runSearch(e.target.value);
+document.addEventListener('click',e=>{if(!e.target.closest('#searchBox,#searchRes'))sRes.classList.remove('show')});
+
 /* ===== Ôn tập ngắt quãng / Интервальное повторение (Chỉ các ô có nét vẽ, không trùng lặp thẻ liên kết) ===== */
 const INT=[0,1,3,7,14,30,60,120],DROP=2,BATCH=20,DAY=864e5;
 const LAB=['Chưa ôn','1 ngày','3 ngày','7 ngày','14 ngày','30 ngày','60 ngày','120 ngày'];
@@ -821,48 +874,68 @@ window.save = function () {
 };
 
 async function push() {
+  if (!user) return;
   try {
-    await setDoc(ref(), { data: JSON.stringify(maps), updated: +localStorage.getItem(UPD) || Date.now() });
-    stat('✓ Đã đồng bộ');
-  } catch (e) { stat('Lỗi đồng bộ'); console.error(e); }
+    const payload = JSON.stringify(maps);
+    const bytes = new Blob([payload]).size;
+    if (bytes > 950000) {
+      stat('⚠️ Quá 1MB (chưa đẩy cloud)');
+      alert('Dữ liệu (gồm nét vẽ/ảnh) hiện nặng ' + Math.round(bytes/1024) + ' KB, vượt giới hạn 1 MB của Firebase. Hãy bấm "Xuất JSON" để sao lưu hoặc giảm bớt ảnh đính kèm.');
+      return;
+    }
+    const ts = +localStorage.getItem(UPD) || Date.now();
+    await setDoc(ref(), { data: payload, updated: ts });
+    localStorage.setItem(UPD, ts);
+    stat('✓ Đã đồng bộ (' + Math.round(bytes/1024) + ' KB)');
+  } catch (e) {
+    stat('Lỗi đồng bộ: ' + (e.code || 'mạng'));
+    console.error(e);
+  }
 }
 
 async function pull() {
+  if (!user) return;
   try {
     stat('Đang đồng bộ…');
     const s = await getDoc(ref());
+    const hasLocalEdit = !!localStorage.getItem(UPD);
     const local = +localStorage.getItem(UPD) || 0;
-    if (s.exists() && s.data().updated > local) {
-      maps = linkSharedNodes(JSON.parse(s.data().data)); cur = 0;
-      origSave(); localStorage.setItem(UPD, s.data().updated);
-      refresh(); stat('✓ Đã tải từ đám mây');
-    } else { await push(); }
-  } catch (e) { stat('Lỗi đồng bộ'); console.error(e); }
+    if (s.exists()) {
+      const cloud = s.data();
+      if (!hasLocalEdit || cloud.updated > local) {
+        maps = linkSharedNodes(JSON.parse(cloud.data)); cur = 0;
+        origSave(); localStorage.setItem(UPD, cloud.updated);
+        refresh(); stat('✓ Đã tải từ đám mây');
+        return;
+      }
+    }
+    if (hasLocalEdit) {
+      await push();
+    } else {
+      stat('✓ Đã kết nối');
+    }
+  } catch (e) {
+    stat('Lỗi đồng bộ: ' + (e.code || 'mạng'));
+    console.error(e);
+  }
 }
 
 const btn = document.getElementById('login');
+const syncBtn = document.getElementById('syncNow');
 btn.onclick = () => user
   ? signOut(auth)
   : signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert('Lỗi đăng nhập: ' + e.code));
+syncBtn.onclick = () => pull();
 onAuthStateChanged(auth, u => {
   user = u;
   btn.textContent = u ? 'Đăng xuất (' + u.email + ')' : 'Đăng nhập Google';
+  syncBtn.style.display = u ? 'inline-block' : 'none';
   if (u) pull(); else stat('');
 });
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            location.reload();
-          }
-        });
-      });
-    }).catch(err => console.error('SW error:', err));
+    navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW error:', err));
   });
 }
 </script>
