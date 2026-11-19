@@ -291,15 +291,9 @@ document.head.appendChild(rvStyle);
 const isDue=n=>!n.s||n.s.d<=Date.now();
 const boxOf=n=>(n.s&&n.s.b)||0;
 function cards(){
-  const out=[];
-  maps.forEach(m=>{(function w(n,path){
-    n.c.forEach(k=>{
-      const p=path.concat(k.t);
-      if(k.v||k.n||(k.e&&k.e.some(Boolean)))out.push({n:k,path:p,map:m.t});
-      w(k,p);
-    });
-  })(m,[])});
-  return out;
+  return maps
+    .filter(m=>m.v||m.n||(m.e&&m.e.some(Boolean)))
+    .map(m=>({n:m,path:[m.t],map:'Sơ đồ / Карта'}));
 }
 const rb=document.createElement('button');rb.id='rvBtn';
 document.querySelector('header').appendChild(rb);
